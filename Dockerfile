@@ -1,25 +1,28 @@
-# Use the specified Ubuntu 18.04 (Bionic) base image
-FROM ubuntu:bionic-20240523
+# Use the full official Python image (includes more system libraries/tools)
+FROM python:3.11
 
-# Set the working directory inside the container
+# Set the working directory
 WORKDIR /app
 
+# Copy requirements.txt first for efficient build caching
+COPY requirements.txt .
 
+# Create virtual environment and install dependencies
+RUN python -m venv /opt/venv \
+    && /opt/venv/bin/pip install --upgrade pip \
+    && /opt/venv/bin/pip install -r requirements.txt
 
-# Update package lists and install the required software
-RUN apt-get update && \
-    apt-get install -y python3-venv zip && \
-    rm -rf /var/lib/apt/lists/*
+# Copy the rest of your application code into the container
+COPY . .
 
-# Set up the 'python' alias to 'python3' for subsequent commands in this Dockerfile
-# and for interactive use if using an interactive shell.
-SHELL ["/bin/bash", "-c"]
-RUN echo "alias python='python3'" >> ~/.bash_aliases
+# Make sure commands use the venv by default
+ENV PATH="/opt/venv/bin:$PATH"
 
-# This exposes port 8000, similar to the forwarded_port in Vagrant.
-# It doesn't actually publish the port, but acts as documentation.
+# Optionally, expose a port (uncomment if your app needs one)
 EXPOSE 8000
 
-# Define a default command to run when the container starts.
-# You might want to change this to run your actual application.
-CMD ["/bin/bash"]
+# Set default command (replace "your_app.py" with your entry point)
+CMD ["bash"]
+
+
+
